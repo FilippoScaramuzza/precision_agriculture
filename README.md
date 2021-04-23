@@ -1,6 +1,9 @@
 # "Fog Computing in Precision Agricolture" scenario simulation
 <div style="text-align: justify">
+<details>
+<summary>Table of Contents</summary>
 
+- ["Fog Computing in Precision Agricolture" scenario simulation](#fog-computing-in-precision-agricolture-scenario-simulation)
   - [Introduction](#introduction)
   - [Topology and Architecture description](#topology-and-architecture-description)
     - [Architecture and level description](#architecture-and-level-description)
@@ -15,6 +18,8 @@
     - [Application Definition](#application-definition)
       - [YAFS & Python 3](#yafs--python-3-1)
       - [Modules definition](#modules-definition)
+      - [Message Definition](#message-definition)
+</details>
 
 ## Introduction
 The goal of the simulation is to test both a *Fog Computing* architecture for *precision agricolture* and a large-scale network simulation with the fog computing simulator, i.e [YAFS](https://github.com/acsicuib/YAFS).
