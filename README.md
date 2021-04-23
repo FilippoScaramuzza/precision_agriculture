@@ -1,6 +1,21 @@
 # "Fog Computing in Precision Agricolture" scenario simulation
 <div style="text-align: justify">
 
+  - [Introduction](#introduction)
+  - [Topology and Architecture description](#topology-and-architecture-description)
+    - [Architecture and level description](#architecture-and-level-description)
+  - [Simulation definition and implementation](#simulation-definition-and-implementation)
+    - [Devices Definition](#devices-definition)
+      - [YAFS & Python 3](#yafs--python-3)
+      - [IoT/Edge level](#iotedge-level)
+      - [Fog L0 level](#fog-l0-level)
+      - [Fog L1 level](#fog-l1-level)
+      - [FOG L2 level](#fog-l2-level)
+      - [Cloud level](#cloud-level)
+    - [Application Definition](#application-definition)
+      - [YAFS & Python 3](#yafs--python-3-1)
+      - [Modules definition](#modules-definition)
+
 ## Introduction
 The goal of the simulation is to test both a *Fog Computing* architecture for *precision agricolture* and a large-scale network simulation with the fog computing simulator, i.e [YAFS](https://github.com/acsicuib/YAFS).
 
@@ -80,7 +95,9 @@ Speaking about links between nodes, they can be defined via JSON file. Mandatory
 * **PR**, i.e link propagation speed
 
 The *latency* is dynamically computed using:
-$$\frac{Message.size.bytes}{BW}+PR$$
+```math
+\frac{Message.size.bytes}{BW}+PR$$
+```
 **Example:**
 ```json
 {
@@ -196,7 +213,7 @@ The computational power for this level it's set to be extremely high. Values spe
 YAFS supports the deployment of multiples applications based on DAG (*Directed Acyclic Graph*). Apps can be defined both via Python API or using a JSON-based syntax.
 
 Application are made of three parts:
-* **Modules (Services):** Modules ddefine services of an App. A module can create messages (a pure source / sensor), a modul can consume messages (a pure sink / actuator ) and other modules can do both tasks. Mandatory attributes are the ```id``` and the ```name```. For example:
+* **Modules (Services):** Modules ddefine services of an App. A module can create messages (a pure source / sensor), a modul can consume messages (a pure sink / actuator ) and other modules can do both tasks. Mandatory attributes are the ```id``` and the ```name```. YAFS does not allow to specify a complexity for modules, insted it's possible to For example:
     ```json
     "module": 
     [
@@ -304,3 +321,22 @@ def create_application():
 
 app1 = create_aplication("Tutorial1")
 ```
+
+#### Modules definition
+
+This app works thanks to several services (application's modules), located into the different levels:
+* **IoT/Edge Level**: In this level we distinguish two modules:
+  * ```sensor_data_sender```, whose purpose is to send the massive amount of data to the upper levels. It's located into sensors.
+  * ```actuator_command_receiver```, whose purpose is to receive command from the upper nodes
+* **Fog L0-L2 Levels**: In Fog Computing there's a problem called "Service Allocation", meaning that more than one node can host more than one service along with problem related. Indeed the latters can change, go ON/OFF or moved from one node to another. 
+  * ```l0_service_1```, ```l0_service_2```, ```l0_service_n``` whose purpose it's to elaborate data and eventually forward messages to the upper levels.
+  * ```l1_service_1```, ```l1_service_2```, ```l1_service_n``` and ```l2_service_1```, ```l2_service_2```, ```l2_service_n``` whose purpose it's to elaborate data and eventually forward messages to the upper levels. In this layers services also offer computational power both for upper and lower levels.
+* **Cloud Level** 
+  * ```cloud_service```, whose purpose it's to elaborate data. Cloud can also work as a source sending requests to lower level for example for distributed computing.
+
+JSON definition of modules is omitted due its semplicity and similarity to what is written above.
+
+#### Message Definition
+
+As said before YAFS needs all the modules interaction to be defined through the definition of messages.
+
