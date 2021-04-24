@@ -18,11 +18,18 @@
     - [Application Definition](#application-definition)
       - [YAFS & Python 3](#yafs--python-3-1)
       - [Modules definition](#modules-definition)
-      - [Message Definition](#message-definition)
+      - [Messages and Transmissions Definition](#messages-and-transmissions-definition)
+    - [Workloads Definition](#workloads-definition)
+      - [YAFS & Python3](#yafs--python3)
+      - [Workloads in Precision Agricolture](#workloads-in-precision-agricolture)
+  - [Creating Dynamic Strategies](#creating-dynamic-strategies)
 </details>
 
 ## Introduction
-The goal of the simulation is to test both a *Fog Computing* architecture for *precision agricolture* and a large-scale network simulation with the fog computing simulator, i.e [YAFS](https://github.com/acsicuib/YAFS).
+The goal of this document is to provide a proof of concept for both a *Fog Computing* architecture for *precision agricolture* and a large-scale network simulation with the fog computing simulator, [YAFS](https://github.com/acsicuib/YAFS).
+
+**NOTE - HOW TO READ** <br>
+As you can see from the ToC, in the [Simulation definition and implementation](#simulation-definition-and-implementation) section, each milestone is made of 2 parts. The first one is an explanation of the basic syntax of YAFS, while the second one describes the possible YAFS implementation of the specific study case (the second part can be made of several parts).
 
 ## Topology and Architecture description
 The reference architecture simulated is shown below:
@@ -240,7 +247,7 @@ Application are made of three parts:
   * ```s```: source module
   * ```d```: destination module
   * ```bytes```: message length in bytes
-  * ```ìnstructions```: the higher this value, the slowest gets processed.
+  * ```ìnstructions```: the higher this value, the slowest gets processed, also depending on the IPT of the node hosting the destination service.
 
   If the message arrive a pure sink this message does not require the last two attributes. In YAFS, it is also possible to define broadcast messages.
 
@@ -274,7 +281,7 @@ Application are made of three parts:
     ]
     ```
 
-* **Transmissions:** represents how the services *process* the requests and generates other requests. ```fractional``` is the probability to propagate the input message.
+* **Transmissions:** represents how the services *process* the requests and generates other requests. ```fractional``` is the probability to propagate the input message. It is important to note that the probability is linked to forwarding, not to individual messages.
     
     **Example:**
     ```json
@@ -341,7 +348,147 @@ This app works thanks to several services (application's modules), located into 
 
 JSON definition of modules is omitted due its semplicity and similarity to what is written above.
 
-#### Message Definition
+#### Messages and Transmissions Definition
 
-As said before YAFS needs all the modules interaction to be defined through the definition of messages.
+As said before YAFS needs all the modules interaction to be defined through the definition of messages. 
 
+As you can see from the picture above, communications are not limited to "touching" levels but lower levels can communicate wtih every other, with lower probability depending on both logical and physical distance.
+
+The json-based syntax is not fully defined, so the API is still necessary to define some functionalities such as broadcasting. To implement the desired functionality YAFS provide an API, that is defined as follows:
+```python
+
+def add_service_module(self, 
+                        module_name, # The module name
+                        message_in,  # The input message
+                        message_out="", # Any outgoing message
+                        distribution="", # Distribution Function
+                        module_dest=[], # BROADCAST destination modules
+                        p=[], # BROADCAST probability for each destination module
+                        **param)
+```
+
+For messages not involved into broadcasting, the transmission can be defined via the JSON-syntax shown above or thanks to the API.
+
+A message starting from the IoT can travel to the L0 level with a 30% probability, then can be forwarded to the L1 level with a 30% probability, then to the L2 with 20% and finally to the Cluoud with a 20% probability.
+
+Messages generated from L0, L1, L2 and Cloud are more and more heavier, implying more computational power and elaboration time.
+
+### Workloads Definition
+
+#### YAFS & Python3
+
+To define initial workloads, i.e the initial messages generated from the app, in YAFS called the *population*, the simplest way is to use a JSON-based syntax.
+
+**Example:**
+```json
+{
+    "sources": 
+    [
+        {
+            "id_resource": 20,
+            "app": 0,
+            "message": "sample_message_0",
+            "lambda": 229
+        }.
+        {
+            "id_resource": 33,
+            "app": 1,
+            "message": "sample_message_1",
+            "lambda": 223
+        }
+    ]
+}
+```
+
+In the example above you can see an attribute called ```lambda```. YAFS can implement dynamic events into the scenario, such as the generation of messages in a dynamic way. The classes involved into dynamic policies, have two main interfaces: an *initialization function* that prepares allocation of modules and workloads on topology entities and a function invoked according to a customized temporal distribution. The ```lambda``` attribute is the *lambda* parameter of the *exponential distribution* for the initialization funciton. At this time (Apr 2021) YAFS only supports this type of distribution in the JSON-based syntax. Other distribution can be found and used with the APIs in ```yafs/distribution.py```. A complete implementation of what it's explained above can be found in ```examples/MCDA/main.py```. In the code the population is implemented as follows:
+```python
+"""
+POPULATION algorithm
+"""
+dataPopulation = json.load(open('population_definition.json'))
+population = JSONPopulation(name="statical", json=dataPopulation)
+```
+
+Next we have to define the service allocation, hence the placement of services in the nodes. The service allocation is managed by the Placement class. The placement can be defined using JSON-based syntax or API functions. 
+
+**Syntax Example:**
+
+```json
+{
+    "initialAllocation": 
+    [
+        {
+            "module_name": "SO",
+            "app": "0",
+            "id_resource": 153
+        },
+        {
+            "module_name": "S1",
+            "app": 0,
+            "id_resource": 153
+        }
+    ]
+}
+```
+
+In the code:
+```python
+ placementJson = json.load(open(path + 'allocDefinition%s.json' % case)) 
+ placement = JSONPlacement(name="Placement", json=placementJson)
+```
+
+Next we need to define the message routing algorithms and the orchestration protocols. The aim of this section is to answer the following question:
+* What route does take a message to reach a service? (*Routing problem*)
+* Where is the service deployed? (*Discovery problem*)
+* How many services of the same type are deployed? (*Scalability issues*)
+* What happen if a network link fail? Whad happen if a service is unavailable in the moment that the message achieves the node where the service is deployed? (*Failure management*)
+
+YAFS developers provided a lot of example (still written in Py 2) that provide an overview for several scenarios. In general what we need to define is a *Selector Path*, that defines how nodes have to deal with routing and all the problem listed above. The selector path can be both defined by the user and come from the NetworkX library.
+
+In the code (example):
+```python
+from yafs.path_routing import DeviceSpeedAwareRouting
+
+selector_path = DeviceSpeedAwareRouting()
+```
+
+This routing and orchestration algorithm are a heavy computational task with huge networks, so it is possible to also implement a caching system for self written routing algorithm.
+
+**DEPLOYING THE APPS**
+
+All the variables declared in the sections above, have to be combined to deploy the app(s). 
+
+Assuming that more than one app have to be deployed:
+```python
+#For each deployment the user - population have to contain only its specific sources 
+for app in apps.keys():
+    s.deploy_app(apps[app], placement, selector_path)
+```
+whith ```s``` being the DES (Simulation) object.
+
+#### Workloads in Precision Agricolture
+
+Placement and all the operation that are iterable for an extremely high number of nodes can be done with python cycles, using the YAFS python api mixed to JSON-defined components.
+
+As said above, services in the network can vary their status (ON/OFF) and YAFS, which is based on the Simpy DES library, allows to implement it with the use of the *Evolution* class. A simple example is given below:
+
+```python
+class Evolution(Population):
+    def init $($ self, listIDEntities, **kwargs):
+        #initialisation of internal variables... 
+        super (Evolution, self).__init__$(**kwargs)
+
+    def initial_allocation(self, sim, app_name):
+        #dealing assignments... 
+        sim.deploy_sink (app_name, node=fog_device, module=module)
+
+    def run(self, sim):
+        #dealing assignments: msg, distribution and app_name. 
+        id ... # listIDEntities.next 
+        idsrc = sim.deploy_source(app_name, id_node=id, msg=..., distribution=...)
+```
+Where there is only one mandatory function to implement that is ```ìnitial_allocation``` and an optional one, ```run```, that is invoked dynamically according to the distribution. The main point is that we can control the topology and the rest of the DES processes, together with the simulation execution.
+
+## Creating Dynamic Strategies
+
+YAFS supports dynamic policies (population, placement, etc.). All of them can follow a distribution. Furthermore, we can create new ones. 
