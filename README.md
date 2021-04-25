@@ -21,8 +21,7 @@
       - [Messages and Transmissions Definition](#messages-and-transmissions-definition)
     - [Workloads Definition](#workloads-definition)
       - [YAFS & Python3](#yafs--python3)
-      - [Workloads in Precision Agricolture](#workloads-in-precision-agricolture)
-  - [Creating Dynamic Strategies](#creating-dynamic-strategies)
+      - [Workloads and Dynamic Strategies in Precision Agricolture](#workloads-and-dynamic-strategies-in-precision-agricolture)
 </details>
 
 ## Introduction
@@ -466,29 +465,32 @@ for app in apps.keys():
 ```
 whith ```s``` being the DES (Simulation) object.
 
-#### Workloads in Precision Agricolture
+#### Workloads and Dynamic Strategies in Precision Agricolture
 
 Placement and all the operation that are iterable for an extremely high number of nodes can be done with python cycles, using the YAFS python api mixed to JSON-defined components.
 
-As said above, services in the network can vary their status (ON/OFF) and YAFS, which is based on the Simpy DES library, allows to implement it with the use of the *Evolution* class. A simple example is given below:
+As said above, services in the network can vary their status (ON/OFF) and YAFS, which is based on the Simpy DES library, allows to implement it with the use of the *CustomStrategy* class.
 
+CustomStrategy class is defined as follows:
 ```python
-class Evolution(Population):
-    def init $($ self, listIDEntities, **kwargs):
-        #initialisation of internal variables... 
-        super (Evolution, self).__init__$(**kwargs)
-
-    def initial_allocation(self, sim, app_name):
-        #dealing assignments... 
-        sim.deploy_sink (app_name, node=fog_device, module=module)
-
-    def run(self, sim):
-        #dealing assignments: msg, distribution and app_name. 
-        id ... # listIDEntities.next 
-        idsrc = sim.deploy_source(app_name, id_node=id, msg=..., distribution=...)
+class CustomStrategy():
+    def __init__(self, pathResults):
+        ...
+    
+    def __call__(self, sim, routing, case, stop_time, it):
+        self.activation += 1
+        ...
 ```
-Where there is only one mandatory function to implement that is ```ìnitial_allocation``` and an optional one, ```run```, that is invoked dynamically according to the distribution. The main point is that we can control the topology and the rest of the DES processes, together with the simulation execution.
+CustomStrategy can be used as follow:
+```python
+dStart = deterministicDistributionStartPoint(stop_time/2.0,
+                                             stop_time / 2.0 /10.0, 
+                                             name="Deterministic")
+evol = CustomStrategy(pathResults)
+s.deploy_monitor("EvolutionOfServices", 
+                 evol, 
+                 dStart, 
+                 **{"sim": s, "routing": selectorPath,"case":case, "stop_time":stop_time, "it":it})    
+```
+When defined like this, the code in ```__call__``` will be triggered in each step of the deterministic distribution specified.
 
-## Creating Dynamic Strategies
-
-YAFS supports dynamic policies (population, placement, etc.). All of them can follow a distribution. Furthermore, we can create new ones. 
