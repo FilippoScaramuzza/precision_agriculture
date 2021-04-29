@@ -117,7 +117,7 @@ The *latency* is dynamically computed using:<br>
     "PR": 10
 }
 ```
-Since it's everything written in Python, user can define the topology hardcoding node and link as follows:
+Since everything is written in Python, the user can define the topology hardcoding node and link as follows:
 ```python
 from yafs.topology import Topology
 
@@ -143,19 +143,19 @@ t.load(topology_json)
 ```
 ```topology_json``` can be a JSON file, too.
 
-For both nodes and links, user can define custom tags, for his specific purposes.
+For both nodes and links, the user can define custom tags, for his/her specific purposes.
 #### IoT/Edge level
 
 Devices involved into this level are sensors and actuators. 
 
-As said before those devices have a low energy consumption: for semplicity we can assume that power consumption is about from 5 mW to 100 mW. This devices also have a low RAM memory, we can assume that it is about from 64 MB to 128 MB.
+As said before those devices have a low energy consumption: for semplicity we can assume that power consumption is about from 5 mW to 100 mW. This devices also have a small RAM memory, we can assume that it is about from 64 kB to 128 kB.
 
 Sensors and actuators can be defined as follows:
 ```json
 {
     "id": n,
     "IPT": 1000,
-    "RAM": 0.064,
+    "RAM": 0.000064,
     "POWERmin": 0.005,
     "POWERmax": 0.1
 }
@@ -177,7 +177,7 @@ L0 level devices are defined as follows:
 
 #### Fog L1 level
 
-From this level on, nodes becomes more powerful. In this level several *city-level nodes* can be deployed, with 16 GB of RAM and  with a power consumption ranging from 250 W to 550 W:
+From this level on, nodes become more powerful. In this level several *city-level nodes* can be deployed, with 16 GB of RAM and  with a power consumption ranging from 250 W to 550 W:
 
 ```json
 {
@@ -205,7 +205,7 @@ Here can be deployed several *regional-level nodes* with 64 GB of RAM and a powe
 
 #### Cloud level
 
-The computational power for this level it's set to be extremely high. Values specified are fictitious:
+The computational power for this level is set to be extremely high. Values specified are fictitious:
 
 ```json
 {
@@ -223,13 +223,14 @@ The computational power for this level it's set to be extremely high. Values spe
 YAFS supports the deployment of multiples applications based on DAG (*Directed Acyclic Graph*). Apps can be defined both via Python API or using a JSON-based syntax.
 
 Application are made of three parts:
-* **Modules (Services):** Modules ddefine services of an App. A module can create messages (a pure source / sensor), a modul can consume messages (a pure sink / actuator ) and other modules can do both tasks. Mandatory attributes are the ```id``` and the ```name```. YAFS does not allow to specify a complexity for modules, insted it's possible to For example:
+* **Modules (Services):** Modules define services of an App. A module can create messages (a pure source / sensor), a module can consume messages (a pure sink / actuator) and other modules can do both tasks. Mandatory attributes are the ```id``` and the ```name```. YAFS does not allow to specify a complexity for modules, insted it's possible to specify the amount of RAM consumed, for example:
     ```json
     "module": 
     [
         {
             "id": 0,
-            "name": "data_sender"
+            "name": "data_sender",
+            "RAM": 0.00001,
         },
         {
             "id": 1,
@@ -245,9 +246,9 @@ Application are made of three parts:
   * ```s```: source module
   * ```d```: destination module
   * ```bytes```: message length in bytes
-  * ```ìnstructions```: the higher this value, the slowest gets processed, also depending on the IPT of the node hosting the destination service.
+  * ```instructions```: the higher this value, the slowest gets processed, also depending on the IPT of the node hosting the destination service.
 
-  If the message arrive a pure sink this message does not require the last two attributes. In YAFS, it is also possible to define broadcast messages.
+  If the message arrives to a pure sink this message does not require the last two attributes. In YAFS, it is also possible to define broadcast messages.
 
     **Example:** 
     ```json
@@ -279,7 +280,7 @@ Application are made of three parts:
     ]
     ```
 
-* **Transmissions:** represents how the services *process* the requests and generates other requests. ```fractional``` is the probability to propagate the input message. It is important to note that the probability is linked to forwarding, not to individual messages.
+* **Transmissions:** represents how the services *process* the requests and generate other requests. ```fractional``` is the probability to propagate the input message. It is important to note that the probability is linked to forwarding, not to individual messages.
     
     **Example:**
     ```json
@@ -298,7 +299,7 @@ Application are made of three parts:
     ]
     ```
 
-Since it's everything written in Python, user can define the application hardcoding modules, messages and transmission as follows
+Since everything is written in Python, user can define the application hardcoding modules, messages and transmission as follows
 
 ```python
 import random
@@ -332,6 +333,11 @@ def create_application():
 app1 = create_aplication("Tutorial1")
 ```
 
+In the definition of services, the attribute ```type``` can have the following values:
+* ```Application.TYPE_SOURCE```: this means that the module only produces messages in order to send them to overlying levels. Sensors fall into this category.
+* ```Application.TYPE_SINK```: this means that the module only receives messages from overlying levels. Actuators fall into this category.
+* ```Application.TYPE_MODULE```: this means that the module can both send and receive messages.
+
 #### Modules definition
 
 This app works thanks to several services (application's modules), located into the different levels:
@@ -339,20 +345,20 @@ This app works thanks to several services (application's modules), located into 
   * ```sensor_data_sender```, whose purpose is to send the massive amount of data to the upper levels. It's located into sensors.
   * ```actuator_command_receiver```, whose purpose is to receive command from the upper nodes
 * **Fog L0-L2 Levels**: In Fog Computing there's a problem called "Service Allocation", meaning that more than one node can host more than one service along with problem related. Indeed the latters can change, go ON/OFF or moved from one node to another. 
-  * ```l0_service_1```, ```l0_service_2```, ```l0_service_n``` whose purpose it's to elaborate data and eventually forward messages to the upper levels.
-  * ```l1_service_1```, ```l1_service_2```, ```l1_service_n``` and ```l2_service_1```, ```l2_service_2```, ```l2_service_n``` whose purpose it's to elaborate data and eventually forward messages to the upper levels. In this layers services also offer computational power both for upper and lower levels.
+  * ```l0_service_1```, ```l0_service_2```, ```l0_service_n``` whose purpose is to process data and eventually forward messages to the upper levels.
+  * ```l1_service_1```, ```l1_service_2```, ```l1_service_n``` and ```l2_service_1```, ```l2_service_2```, ```l2_service_n``` whose purpose is to process data and eventually forward messages to the upper levels. In this layers services also offer computational power both for upper and lower levels.
 * **Cloud Level** 
-  * ```cloud_service```, whose purpose it's to elaborate data. Cloud can also work as a source sending requests to lower level for example for distributed computing.
+  * ```cloud_service```, whose purpose it's to elaborate data. Cloud can also work as a source sending requests to lower levels for example for distributed computing.
 
 JSON definition of modules is omitted due its semplicity and similarity to what is written above.
 
 #### Messages and Transmissions Definition
 
-As said before YAFS needs all the modules interaction to be defined through the definition of messages. 
+As previously said, YAFS needs all the module interactions to be defined through the definition of messages. 
 
-As you can see from the picture above, communications are not limited to "touching" levels but lower levels can communicate wtih every other, with lower probability depending on both logical and physical distance.
+As you can see from the picture above, communications are not limited to "adjacent" levels but lower levels can communicate with every other, with lower probability depending on both logical and physical distance.
 
-The json-based syntax is not fully defined, so the API is still necessary to define some functionalities such as broadcasting. To implement the desired functionality YAFS provide an API, that is defined as follows:
+The json-based syntax is not fully defined, so the API is still necessary to define some functionalities such as broadcasting. To implement the desired functionality YAFS provides an API, which is defined as follows:
 ```python
 
 def add_service_module(self, 
@@ -398,7 +404,7 @@ To define initial workloads, i.e the initial messages generated from the app, in
 }
 ```
 
-In the example above you can see an attribute called ```lambda```. YAFS can implement dynamic events into the scenario, such as the generation of messages in a dynamic way. The classes involved into dynamic policies, have two main interfaces: an *initialization function* that prepares allocation of modules and workloads on topology entities and a function invoked according to a customized temporal distribution. The ```lambda``` attribute is the *lambda* parameter of the *exponential distribution* for the initialization funciton. At this time (Apr 2021) YAFS only supports this type of distribution in the JSON-based syntax. Other distribution can be found and used with the APIs in ```yafs/distribution.py```. A complete implementation of what it's explained above can be found in ```examples/MCDA/main.py```. In the code the population is implemented as follows:
+In the example above you can see an attribute called ```lambda```. YAFS can implement dynamic events into the scenario, such as the generation of messages in a dynamic way. The classes involved into dynamic policies, have two main interfaces: an *initialization function* that prepares allocation of modules and workloads on topology entities and a function invoked according to a customized temporal distribution. The ```lambda``` attribute is the *lambda* parameter of the *exponential distribution* for the initialization funciton. At this time (Apr 2021) YAFS only supports this type of distribution in the JSON-based syntax. Other distributions can be found and used with the APIs in ```yafs/distribution.py```. A complete implementation of what is explained above can be found in ```examples/MCDA/main.py```. In the code the population is implemented as follows:
 ```python
 """
 POPULATION algorithm
@@ -439,9 +445,9 @@ Next we need to define the message routing algorithms and the orchestration prot
 * What route does take a message to reach a service? (*Routing problem*)
 * Where is the service deployed? (*Discovery problem*)
 * How many services of the same type are deployed? (*Scalability issues*)
-* What happen if a network link fail? Whad happen if a service is unavailable in the moment that the message achieves the node where the service is deployed? (*Failure management*)
+* What happen if a network link fails? What happens if a service is unavailable in the moment that the message reaches the node where the service is deployed? (*Failure management*)
 
-YAFS developers provided a lot of example (still written in Py 2) that provide an overview for several scenarios. In general what we need to define is a *Selector Path*, that defines how nodes have to deal with routing and all the problem listed above. The selector path can be both defined by the user and come from the NetworkX library.
+YAFS developers provided a lot of examples (still written in Py 2) that provide an overview for several scenarios. In general what we need to define is a *Selector Path*, that defines how nodes have to deal with routing and all the problem listed above. The selector path can be both defined by the user and come from the NetworkX library.
 
 In the code (example):
 ```python
@@ -450,7 +456,7 @@ from yafs.path_routing import DeviceSpeedAwareRouting
 selector_path = DeviceSpeedAwareRouting()
 ```
 
-This routing and orchestration algorithm are a heavy computational task with huge networks, so it is possible to also implement a caching system for self written routing algorithm.
+This routing and orchestration algorithm are a heavy computational task with huge networks, so it is possible to also implement a caching system for self written routing algorithms.
 
 **DEPLOYING THE APPS**
 
