@@ -106,9 +106,8 @@ Speaking about links between nodes, they can be defined via JSON file. Mandatory
 * **PR**, i.e link propagation speed
 
 The *latency* is dynamically computed using:
-```math
-\frac{Message.size.bytes}{BW}+PR
-```
+<img src="https://latex.codecogs.com/gif.latex?\frac{Message.size.bytes}{BW}+PR" />
+
 **Example:**
 ```json
 {
