@@ -1,14 +1,14 @@
-# "Fog Computing in Precision Agricolture" scenario simulation
+# "Fog Computing in Precision Agriculture" scenario simulation
 <div style="text-align: justify">
 <details>
 <summary>Table of Contents</summary>
 
-- ["Fog Computing in Precision Agricolture" scenario simulation](#fog-computing-in-precision-agricolture-scenario-simulation)
+- ["Fog Computing in Precision Agriculture" scenario simulation](#fog-computing-in-precision-agriculture-scenario-simulation)
   - [Introduction](#introduction)
   - [Topology and Architecture description](#topology-and-architecture-description)
     - [Architecture and level description](#architecture-and-level-description)
   - [Simulation definition and implementation](#simulation-definition-and-implementation)
-    - [Devices Definition](#devices-definition)
+    - [Device Definition](#device-definition)
       - [YAFS & Python 3](#yafs--python-3)
       - [IoT/Edge level](#iotedge-level)
       - [Fog L0 level](#fog-l0-level)
@@ -21,11 +21,11 @@
       - [Messages and Transmissions Definition](#messages-and-transmissions-definition)
     - [Workloads Definition](#workloads-definition)
       - [YAFS & Python3](#yafs--python3)
-      - [Workloads and Dynamic Strategies in Precision Agricolture](#workloads-and-dynamic-strategies-in-precision-agricolture)
+      - [Workloads and Dynamic Strategies in Precision Agriculture](#workloads-and-dynamic-strategies-in-precision-agriculture)
 </details>
 
 ## Introduction
-The goal of this document is to provide a proof of concept for both a *Fog Computing* architecture for *precision agricolture* and a large-scale network simulation with the fog computing simulator, [YAFS](https://github.com/acsicuib/YAFS).
+The goal of this document is to provide a proof of concept for both a *Fog Computing* architecture for *precision agriculture* and a large-scale network simulation with the fog computing simulator, [YAFS](https://github.com/acsicuib/YAFS).
 
 **NOTE - HOW TO READ** <br>
 As you can see from the ToC, in the [Simulation definition and implementation](#simulation-definition-and-implementation) section, each milestone is made of 2 parts. The first one is an explanation of the basic syntax of YAFS, while the second one describes the possible YAFS implementation of the specific study case (the second part can be made of several parts).
@@ -39,19 +39,19 @@ The reference architecture simulated is shown below:
 
 </div>
 
-Precision agricolture has a lot of needs, in this study case reduced to *data production* (from sensors), *data processing* (from Fog Nodes and Cloud) and *communication with actuators* (valve, tractors, etc.).
+Precision agriculture has a lot of needs, in this study case reduced to *data production* (from sensors), *data processing* (from Fog Nodes and Cloud) and *communication with actuators* (valve, tractors, etc.).
 
-As shown in the figure above, devices are located into levels, starting from the bottom with nodes that offers none or few services to the network but generates massive amount of data, to the top level with nodes that don't produce data but provide services and computanioal power to the network. In addition, speaking about reachability, the lower the level and the more the node will be reached from limited and circumscribed areas, and also from the physical point of view will be present in the reference territory (guaranteeing low latencies).
+As shown in the figure above, devices are located into levels, starting from the bottom with nodes that offers none or few services to the network but generate massive amount of data, to the top level with nodes that don't produce data but provide services and computational power to the network. In addition, speaking about reachability, the lower the level and the more the node will be reached from limited and circumscribed areas, and also from the physical point of view will be present in the reference territory thus guaranteeing low latencies.
 
 ### Architecture and level description
 
  * **IoT/Edge level**<br>
-    This level is made of all sensors and actuators that are located into IoT area, having an extremely low computational power, power supply problems, discontinuity in data production and mobility. 
-    Devices involved in this level works with low payload protocols, low consumption and hight sleep time. In this level are located Edge nodes, too. The definition of these nodes in the literature varies a lot, in general they can be defined as nodes, to the edge of the network, in which a small elaboration of the data is carried out.
+    This level is made of IoT devices, that have an extremely low computational power, power supply problems, discontinuity in data production and mobility. 
+    Devices involved in this level works with low payload protocols, low consumption and hight sleep time. Edge nodes are located in this level, too. The definition of these nodes in the literature varies a lot, in general they can be defined as nodes, to the edge of the network, in which a small processing of the data is carried out.
  * **Fog L0 level**<br>
-    Here we insert services that do not fall within the IoT level below, but that do not generally offer services to the network (i.e act mostly as a client), but only to private users. They are, for example, farm-level servers that monitor private sensors and/or actuators.
+    Here we insert services that do not fall within the IoT level below, but that do not generally offer services and act mostly as clients, managed by  private users. They are, for example, farm-level servers that monitor private sensors and/or actuators.
 * **Fog L1 level**<br>
-    Nodes that provide services and collect and aggregate data from different companies. A possible area of interest is at the provincial or sub-provincial level. These nodes offer several services to the network, for the underlying nodes and for both the overlying ones. For example, for the underlying nodes it deals with data collection, maintenance and historical consultation, communication with actuators, etc. At levels above it offers communication of data (even or only aggregates and anonymous) e.g for data processing.
+    These nodes provide services and collect and aggregate data from different sources (farms and local authorities). A possible area of interest is at the provincial or sub-provincial level. These nodes offer several services for both underlying and overlying nodes. For example, for the underlying nodes the Fog L1 level deals with data collection, maintenance and historical consultation, communication with actuators, etc. At levels above it offers data (even or only aggregates and anonymous) that will be processed.
 * **Fog L2 level**<br>
     Nodes dealing with regional or sub-regional geographical areas. They have larger processing capabilities than the underlying level and can therefore also perform heavier tasks such as statistical analysis of aggregated data. They also offer more complex pre-processing at the level above (e.g. distributed ML algorithms).
 * **Cloud level**<br>
@@ -59,9 +59,9 @@ As shown in the figure above, devices are located into levels, starting from the
 
 ## Simulation definition and implementation
 
-In this section device types, message formats and trasmission rate along the network will be defined, taking a look at the Python code, explaining it.
+In this section device types, message formats and trasmission rate along the network will be defined, taking a look at the Python code and explaining it.
 
-### Devices Definition
+### Device Definition
 
 #### YAFS & Python 3
 
@@ -107,7 +107,7 @@ Speaking about links between nodes, they can be defined via JSON file. Mandatory
 
 The *latency* is dynamically computed using:
 ```math
-\frac{Message.size.bytes}{BW}+PR$$
+\frac{Message.size.bytes}{BW}+PR
 ```
 **Example:**
 ```json
@@ -465,7 +465,7 @@ for app in apps.keys():
 ```
 whith ```s``` being the DES (Simulation) object.
 
-#### Workloads and Dynamic Strategies in Precision Agricolture
+#### Workloads and Dynamic Strategies in Precision Agriculture
 
 Placement and all the operation that are iterable for an extremely high number of nodes can be done with python cycles, using the YAFS python api mixed to JSON-defined components.
 
