@@ -105,8 +105,8 @@ Speaking about links between nodes, they can be defined via JSON file. Mandatory
 * **BW**, i.e link bandwidth
 * **PR**, i.e link propagation speed
 
-The *latency* is dynamically computed using:
-<img src="documentation/images/latency_formula.png" />
+The *latency* is dynamically computed using:<br>
+<img style="width: 200px;" src="documentation/images/latency_formula.png" />
 
 **Example:**
 ```json
