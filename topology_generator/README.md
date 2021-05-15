@@ -25,6 +25,6 @@ G = TopologyGenerator.generate_topology(500, 4, 3)
 
 Nodes in their belonging level (exluding the IoT level) are interconnected using a power law distribution, following the *scale-free network* model (<a href="https://en.wikipedia.org/wiki/Scale-free_network">Wikipedia</a>). In particular in this generator is used the ```barabasi_albert_graph``` method from ```networkx```. This method returns a random graph according to the Barabási–Albert (<a href="https://en.wikipedia.org/wiki/Barab%C3%A1si%E2%80%93Albert_model">Wikipedia</a>) preferential attachment model: a graph of ```n``` nodes is grown by attaching new nodes each with ```m``` (in this case ```m = 1```) edges that are preferentially attached to existing nodes with high degree.
 
-***
-Nodes in the IoT levels are disconnected from each other, since is rare that sensors and actuators are direclty connected.
-***
+The nodes in the iot layer are not connected to each other, since it is rare that sensors and attuctors are connected.
+
+Every node in level ```i``` has a 80% chance to be connected to a random node belonging to the level ```i + 1```. Nodes that not satisfy this percentage have a 80% chance to be connected to a random node in the level ```i + 2```, and so on. (80% and 20% percentages follow the <a href="https://en.wikipedia.org/wiki/Pareto_principle">Pareto Principle</a>).
