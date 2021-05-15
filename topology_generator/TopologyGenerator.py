@@ -55,7 +55,7 @@ class TopologyGenerator:
 
 
 def main():
-    G = TopologyGenerator.generate_topology(500, 4, 3)
+    G = TopologyGenerator.generate_topology(500, 4, 5)
 
 
 if __name__ == '__main__':

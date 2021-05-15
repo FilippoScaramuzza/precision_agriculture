@@ -1,3 +1,5 @@
+<div style="text-align: justify">
+
 # Topology Generator
 
 The class ```TopologyGenerator``` is a tool for generating layared networks (```networkx``` graphs) for simulating Fog Computing realistic scenarios.
@@ -28,3 +30,11 @@ Nodes in their belonging level (exluding the IoT level) are interconnected using
 The nodes in the iot layer are not connected to each other, since it is rare that sensors and attuctors are connected.
 
 Every node in level ```i``` has a 80% chance to be connected to a random node belonging to the level ```i + 1```. Nodes that not satisfy this percentage have a 80% chance to be connected to a random node in the level ```i + 2```, and so on. (80% and 20% percentages follow the <a href="https://en.wikipedia.org/wiki/Pareto_principle">Pareto Principle</a>).
+
+## Demonstrations
+
+IoT nodes can be connected to nodes of non-touching levels, with a low chance:<br>
+<img src="examples_png/example_1.png">
+
+Nodes in intermediate levels can be connected to both upper and lower levels, assuming that they can provide services to both:
+<img src="examples_png/example_2.png">
