@@ -1,5 +1,6 @@
 import networkx as nx
 import json
+import random
 
 class TopologyGenerator:
     
@@ -28,7 +29,24 @@ class TopologyGenerator:
                 
             G = nx.compose(G, H)
 
-        nx.write_gexf(G, "test.gexf")
+        for level in range(levels):
+            if level == 0:
+                for node_from in [node_from for node_from in G.nodes if node_from < iot_nodes]:
+                    
+                    rnd_level_to = 1
+                    while random.randrange(100) < 20:
+                        rnd_level_to += 1
+                        if(rnd_level_to > levels):
+                            rnd_level_to = 1
+                            break
+
+                    to_nodes = iot_nodes
+                    for l in range(1, rnd_level_to+1):
+                        to_nodes += iot_nodes//(k**l)
+                    G.add_edge(node_from, random.choice([node_to for node_to in G.nodes if node_to > iot_nodes and node_to < to_nodes]))
+        
+
+        nx.write_gexf(G, "test.gexf")   
         return G
 
 
