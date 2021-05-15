@@ -34,7 +34,7 @@ Every node in level ```i``` has a 80% chance to be connected to a random node be
 ## Demonstrations
 
 IoT nodes can be connected to nodes of non-touching levels, with a low chance:<br>
-<img src="examples_png/example_1.png">
+<img width: "200px" src="examples_png/example_1.png">
 
-Nodes in intermediate levels can be connected to both upper and lower levels, assuming that they can provide services to both:
+Nodes in intermediate levels can be connected to both upper and lower levels, assuming that they can provide services to both:<br>
 <img src="examples_png/example_2.png">
