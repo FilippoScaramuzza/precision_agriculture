@@ -29,7 +29,7 @@ Nodes in their belonging level (exluding the IoT level) are interconnected using
 
 The nodes in the iot layer are not connected to each other, since it is rare that sensors and attuctors are connected.
 
-Every node in level ```i``` has a 80% chance to be connected to a random node belonging to the level ```i + 1```. Nodes that not satisfy this percentage have a 80% chance to be connected to a random node in the level ```i + 2```, and so on. (80% and 20% percentages follow the <a href="https://en.wikipedia.org/wiki/Pareto_principle">Pareto Principle</a>).
+The 20% of the nodes in level ```i``` have a 80% chance to be connected to a random node belonging to the level ```i + 1```. Nodes that not satisfy this percentage have a 80% chance to be connected to a random node in the level ```i + 2```, and so on. (80% and 20% percentages follow the <a href="https://en.wikipedia.org/wiki/Pareto_principle">Pareto Principle</a>).
 
 ## Demonstrations
 

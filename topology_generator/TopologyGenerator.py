@@ -17,6 +17,7 @@ class TopologyGenerator:
 
         ranges = []
 
+        # IoT devices and FOG/Cloud levels generation
         for level in range(levels):
             if level == 0:
                 H = nx.Graph()
@@ -36,10 +37,15 @@ class TopologyGenerator:
             ranges.append({"from": len(G.nodes), "to": len(G.nodes) + len(H.nodes) - 1})
             G = nx.compose(G, H)
 
+        # Connection between levels
         for level in range(levels-1):
             
             for node_from in [node_from for node_from in G.nodes if node_from >= ranges[level]["from"] and node_from < ranges[level]["to"]]:
 
+                # only 20% of node in fog levels are connected to upper levels
+                if level > 0 and random.randrange(100) > 20:
+                    continue
+                
                 rnd_level_to = level+1
                 while random.randrange(100) < 20:
                     rnd_level_to += 1
