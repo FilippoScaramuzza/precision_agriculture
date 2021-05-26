@@ -1,4 +1,5 @@
 from topology_generator.TopologyGenerator import TopologyGenerator
+import networkx as nx
 import json
 import random
 
@@ -12,31 +13,177 @@ class ExperimentConfiguration:
         self.REDUCTION_FACTOR_2 = 2 # FOG-i -> FOG-i+1 nodes reduction factor
         self.HUB_GENERATION_PROBABILITY = 0.1
 
-        self.FUNC_NODE_RAM_IOT = "'{:.6f}'.format(random.randrange(1, 10) * 10**-6)"
-        self.FUNC_NODE_RAM_FOG0 = "'{:.6f}'.format(random.randrange(1, 10) * 10**-2)"
-        self.FUNC_NODE_RAM_FOG1 = "'{:.6f}'.format(random.randrange(1, 10) * 10**-1)"
-        self.FUNC_NODE_RAM_FOG2 = "'{:.6f}'.format(random.randrange(1, 10) * 10**-1)"
+        self.FUNC_NODE_RAM_IOT = "random.randrange(10,14)"
+        self.FUNC_NODE_RAM_FOG0 = "random.randrange(13, 17)"
+        self.FUNC_NODE_RAM_FOG1 = "random.randrange(16, 20)"
+        self.FUNC_NODE_RAM_FOG2 = "random.randrange(19, 23)"
         self.FUNC_NODE_RAM_CLOUD = "9999999999999999"
 
-        self.FUNC_NODE_IPT_IOT = "'{:.6f}'.format(random.randrange(1, 10) * 10**-2)"
-        self.FUNC_NODE_IPT_FOG0 = "'{:.6f}'.format(random.randrange(1, 10) * 10**-1)"
-        self.FUNC_NODE_IPT_FOG1 = "'{:.6f}'.format(random.randrange(1, 10) * 10**0)"
-        self.FUNC_NODE_IPT_FOG2 = "'{:.6f}'.format(random.randrange(1, 10) * 10)"
+        self.FUNC_NODE_IPT_IOT = "random.randrange(1, 10)"
+        self.FUNC_NODE_IPT_FOG0 = "random.randrange(10, 200)"
+        self.FUNC_NODE_IPT_FOG1 = "random.randrange(190, 380)"
+        self.FUNC_NODE_IPT_FOG2 = "random.randrange(370, 560)"
         self.FUNC_NODE_IPT_CLOUD = "9999"
 
         self.FUNC_EDGE_PR_SAME_LEVEL = "random.randrange(1, 10)"
         self.FUNC_EDGE_BW_SAME_LEVEL = "random.randrange(20, 30)"
-        self.FUNC_EDGE_PR_ADJ_LEVEL = "random.randrange(20, 30)"
-        self.FUNC_EDGE_BW_ADJ_LEVEL = "random.randrange(5, 10)"
-        self.FUNC_EDGE_PR_NON_ADJ_LEVEL = "random.randrange(30, 40)"
-        self.FUNC_EDGE_BW_NON_ADJ_LEVEL = "random.randrange(1, 5)"
+        self.FUNC_EDGE_PR_ADJ_LEVEL = "random.randrange(5, 15)" 
+        self.FUNC_EDGE_BW_ADJ_LEVEL = "random.randrange(20, 30)"
+        self.FUNC_EDGE_PR_NON_ADJ_LEVEL = "random.randrange(10, 15)"
+        self.FUNC_EDGE_BW_NON_ADJ_LEVEL = "random.randrange(20, 30)"
+
+        self.NUMBER_OF_APPS = 20
+        self.FUNC_APP_GENERATION = "nx.gn_graph(random.randint(2,4))"
+        self.FUNC_APP_DEADLINES = "random.randint(2600, 6600)"
+        self.FUNC_SERVICE_RESOURCES = "random.randint(1,6)" 
+        self.FUNC_SERVICEINSTR = "random.randint(20000,60000)"
+        self.FUNC_SERVICEMESSAGESIZE = "random.randint(1500000,4500000)"
+        
 
     def userGeneration(self):
         # TODO
         return
 
     def appGeneration(self):
-        # TODO
+        self.number_of_services = 0
+        self.apps = []
+        self.apps_resources = []
+        self.apps_deadlines = {}
+        self.services_resources = {}
+        self.apps_source_service = []
+        self.apps_source_message = []
+        self.map_service_to_app = []
+        self.map_serviceid_to_servicename = []
+        self.apps_total_MIPS = []
+        app_json = []
+        
+        for i in range(self.NUMBER_OF_APPS):
+            app_temp = {}
+            labels_temp = {}
+            APP = eval(self.FUNC_APP_GENERATION)
+
+            for n in range(len(APP.nodes)):
+                labels_temp[n] = str(n)
+            
+            edge_list_ = []
+
+            for e in APP.edges:
+                edge_list_.append(e)
+
+            # edges from 1 to 0 (as they are generated) get inverted (from 0 to 1)
+            for e in edge_list_:
+                APP.remove_edge(e[0], e[1])
+                APP.add_edge(e[0], e[1])
+
+            mapping = dict(zip(APP.nodes, range(self.number_of_services, self.number_of_services + len(APP.nodes))))
+            APP = nx.relabel_nodes(APP, mapping)
+
+            self.number_of_services = self.number_of_services + len(APP.nodes)
+
+            self.apps.append(APP)
+
+            for n in APP.nodes:
+                self.services_resources[n] = eval(self.FUNC_SERVICE_RESOURCES)
+            self.apps_resources.append(self.services_resources)
+
+
+            topologicorder_ = list(nx.topological_sort(APP))
+            source = topologicorder_[0]
+
+        
+            self.apps_source_service.append(source)
+        
+            
+            self.apps_deadlines[i] = eval(self.FUNC_APP_DEADLINES)
+            app_temp['id']=i
+            app_temp['name']=str(i)
+            app_temp['deadline']=self.apps_deadlines[i]
+        
+            app_temp['module']=list()
+        
+            edge_number=0
+            app_temp['message']=list()
+        
+            app_temp['transmission']=list()
+        
+            total_MIPS = 0
+        
+            for n in APP.nodes:
+                self.map_service_to_app.append(str(i))
+                self.map_serviceid_to_servicename.append(str(i)+'_'+str(n))
+                node_temp={}
+                node_temp['id']=n
+                node_temp['name']=str(i)+'_'+str(n)
+                node_temp['RAM']=self.services_resources[n]
+                node_temp['type']='MODULE'
+                if source==n:
+                    edge_temp={}
+                    edge_temp['id']=edge_number
+                    edge_number = edge_number +1
+                    edge_temp['name']="M.USER.APP."+str(i)
+                    edge_temp['s']= "None"
+                    edge_temp['d']=str(i)+'_'+str(n)
+                    edge_temp['instructions']=eval(self.FUNC_SERVICEINSTR)
+                    total_MIPS = total_MIPS + edge_temp['instructions']
+                    edge_temp['bytes']=eval(self.FUNC_SERVICEMESSAGESIZE)
+                    app_temp['message'].append(edge_temp)
+                    self.apps_source_message.append(edge_temp)
+                    
+                    for o in APP.edges:
+                        if o[0]==source:
+                            transmission_temp = {}
+                            transmission_temp['module']=str(i)+'_'+str(source)
+                            transmission_temp['message_in']="M.USER.APP."+str(i)
+                            transmission_temp['message_out']=str(i)+'_('+str(o[0])+"-"+str(o[1])+")"
+                            app_temp['transmission'].append(transmission_temp)
+
+                app_temp['module'].append(node_temp)
+        
+        
+            for n in APP.edges:
+                edge_temp={}
+                edge_temp['id']=edge_number
+                edge_number = edge_number +1
+                edge_temp['name']=str(i)+'_('+str(n[0])+"-"+str(n[1])+")"
+                edge_temp['s']=str(i)+'_'+str(n[0])
+                edge_temp['d']=str(i)+'_'+str(n[1])
+                edge_temp['instructions']=eval(self.FUNC_SERVICEINSTR)
+                total_MIPS = total_MIPS + edge_temp['instructions']
+                edge_temp['bytes']=eval(self.FUNC_SERVICEMESSAGESIZE)
+                app_temp['message'].append(edge_temp)
+                dest_node = n[1]
+                for o in APP.edges:
+                    if o[0]==dest_node:
+                        transmission_temp = {}
+                        transmission_temp['module']=str(i)+'_'+str(n[1])
+                        transmission_temp['message_in']=str(i)+'_('+str(n[0])+"-"+str(n[1])+")"
+                        transmission_temp['message_out']=str(i)+'_('+str(o[0])+"-"+str(o[1])+")"
+                        app_temp['transmission'].append(transmission_temp)
+        
+        
+            for n in APP.nodes:
+                outgoing_edges = False
+                for m in APP.edges:
+                    if m[0]==n:
+                        outgoing_edges = True
+                        break
+                if not outgoing_edges:
+                    for m in APP.edges:
+                        if m[1]==n:
+                            transmission_temp = {}
+                            transmission_temp['module']=str(i)+'_'+str(n)
+                            transmission_temp['message_in']=str(i)+'_('+str(m[0])+"-"+str(m[1])+")"
+                            app_temp['transmission'].append(transmission_temp)
+        
+        
+            self.apps_total_MIPS.append(total_MIPS)
+        
+            app_json.append(app_temp)
+        
+        
+        file = open("appDefinition.json","w")
+        file.write(json.dumps(app_json, indent=2))
+        file.close()
         return
 
     def networkGeneration(self):
@@ -100,3 +247,4 @@ class ExperimentConfiguration:
 if __name__ == "__main__":
     EC = ExperimentConfiguration()
     EC.networkGeneration()
+    EC.appGeneration()
