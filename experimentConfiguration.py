@@ -279,6 +279,7 @@ class ExperimentConfiguration:
                 network_graph[u][v]["BW"] = eval(self.FUNC_EDGE_BW_NON_ADJ_LEVEL_2)
 
         self.gateways_devices = [n for n in network_graph.nodes if network_graph.nodes[n]["level"]=="gateway"]
+        self.G = network_graph
 
         json.dump(dict(entity=[dict(id=n, 
                                     RAM=network_graph.nodes[n]["RAM"], 
