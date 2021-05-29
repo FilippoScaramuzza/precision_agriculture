@@ -6,11 +6,12 @@ import random
 class ExperimentConfiguration:
 
     def __init__(self):
+
         self.IOT_DEVICES_NUM = 2000
         self.NETWORK_LEVELS_NUM = 5
         self.REDUCTION_FACTOR_1 = 50 # IOT -> FOG-0 nodes reduction factor
-        self.LINK_GENERATION_PROBABILITY_FOG0 = 0.01
-        self.REDUCTION_FACTOR_2 = 2 # FOG-i -> FOG-i+1 nodes reduction factor
+        self.LINK_GENERATION_PROBABILITY_FOG0 = 0
+        self.REDUCTION_FACTOR_2 = 3/2 # FOG-i -> FOG-i+1 nodes reduction factor (3/2 means multuplying by 2/3)
         self.HUB_GENERATION_PROBABILITY = 0.1
 
         self.FUNC_NODE_RAM_IOT = "random.randrange(10,14)"
@@ -38,13 +39,58 @@ class ExperimentConfiguration:
         self.FUNC_SERVICE_RESOURCES = "random.randint(1,6)" 
         self.FUNC_SERVICEINSTR = "random.randint(20000,60000)"
         self.FUNC_SERVICEMESSAGESIZE = "random.randint(1500000,4500000)"
-        
 
+        self.FUNC_REQUESTPROB = "random.random()/4"
+        self.FUNC_USERREQRAT = "random.randint(200,1000)"
+        
     def userGeneration(self):
-        # TODO
-        return
+        
+        #*********************************
+        # GENERATION OF INITIAL MESSAGES *
+        #*********************************
+
+        user_json = {}
+        
+        self.users = []
+        
+        self.apps_requests = []
+        for i in range(0,self.NUMBER_OF_APPS):
+            user_request_list = set()
+            prob_of_requested = eval(self.FUNC_REQUESTPROB)
+            at_least_one_allocated = False
+            for j in self.gateways_devices:
+                if random.random()<prob_of_requested:
+                    one_user={}
+                    one_user['app']=str(i)
+                    one_user['message']="M.USER.APP."+str(i)
+                    one_user['id_resource']=j
+                    one_user['lambda']=eval(self.FUNC_USERREQRAT)
+                    user_request_list.add(j)
+                    self.users.append(one_user)
+                    at_least_one_allocated = True
+            if not at_least_one_allocated:
+                j=random.randint(0,len(self.gateways_devices)-1)
+                one_user={}
+                one_user['app']=str(i)
+                one_user['message']="M.USER.APP."+str(i)
+                one_user['id_resource']=j
+                one_user['lambda']=eval(self.FUNC_USERREQRAT)
+                user_request_list.add(j)
+                self.users.append(one_user)
+            self.apps_requests.append(user_request_list)
+        
+        user_json['sources']=self.users
+        
+        file = open("usersDefinition.json","w")
+        file.write(json.dumps(user_json))
+        file.close()     
 
     def appGeneration(self):
+
+        #*********************************
+        #   GENERATION OF APPLICATIONS   *
+        #*********************************
+
         self.number_of_services = 0
         self.apps = []
         self.apps_resources = []
@@ -86,13 +132,10 @@ class ExperimentConfiguration:
                 self.services_resources[n] = eval(self.FUNC_SERVICE_RESOURCES)
             self.apps_resources.append(self.services_resources)
 
-
             topologicorder_ = list(nx.topological_sort(APP))
             source = topologicorder_[0]
-
         
             self.apps_source_service.append(source)
-        
             
             self.apps_deadlines[i] = eval(self.FUNC_APP_DEADLINES)
             app_temp['id']=i
@@ -139,7 +182,6 @@ class ExperimentConfiguration:
 
                 app_temp['module'].append(node_temp)
         
-        
             for n in APP.edges:
                 edge_temp={}
                 edge_temp['id']=edge_number
@@ -175,30 +217,28 @@ class ExperimentConfiguration:
                             transmission_temp['message_in']=str(i)+'_('+str(m[0])+"-"+str(m[1])+")"
                             app_temp['transmission'].append(transmission_temp)
         
-        
             self.apps_total_MIPS.append(total_MIPS)
         
             app_json.append(app_temp)
         
-        
         file = open("appDefinition.json","w")
         file.write(json.dumps(app_json, indent=2))
         file.close()
-        return
 
     def networkGeneration(self):
-        #**************************************
-        #generation of the network topology
-        #**************************************
 
-        # TOPOLOGY GENERATION
+        #*********************************
+        # GENERATION OF NETWORK TOPOLOGY *
+        #*********************************
 
-        network_graph = TopologyGenerator.generate_topology(self.IOT_DEVICES_NUM,
-                                          self.NETWORK_LEVELS_NUM,
-                                          self.REDUCTION_FACTOR_1,
-                                          self.LINK_GENERATION_PROBABILITY_FOG0,
-                                          self.REDUCTION_FACTOR_2,
-                                          self.HUB_GENERATION_PROBABILITY)
+        network_graph = TopologyGenerator.generate_topology(
+                                            iot_nodes=self.IOT_DEVICES_NUM,
+                                            YAFS_sim=True,
+                                            levels=self.NETWORK_LEVELS_NUM,
+                                            fog0_reduction_factor=self.REDUCTION_FACTOR_1,
+                                            edge_prob_0=self.LINK_GENERATION_PROBABILITY_FOG0,
+                                            fogi_reduction_factor=self.REDUCTION_FACTOR_2,
+                                            hub_prob=self.HUB_GENERATION_PROBABILITY)
 
         for i in range(len(network_graph.nodes)):
             if network_graph.nodes[i]["class[z]"] == 0:
@@ -229,6 +269,8 @@ class ExperimentConfiguration:
                 network_graph[u][v]["PR"] = eval(self.FUNC_EDGE_PR_ADJ_LEVEL)
                 network_graph[u][v]["BW"] = eval(self.FUNC_EDGE_BW_ADJ_LEVEL)
 
+        self.gateways_devices = [n for n in network_graph.nodes if network_graph.nodes[n]["class[z]"]==1]
+
         json.dump(dict(entity=[dict(id=n, 
                                     RAM=network_graph.nodes[n]["RAM"], 
                                     IPT=network_graph.nodes[n]["IPT"]) for n in network_graph.nodes()],
@@ -238,13 +280,8 @@ class ExperimentConfiguration:
                                   BW=network_graph[u][v]["BW"]) for u,v in network_graph.edges()]),
         open("topologyDefinition.json", 'w'), indent=2)
 
-        return 
-
-    def loadConfiguration(self):
-        # TODO
-        return 
-
 if __name__ == "__main__":
     EC = ExperimentConfiguration()
     EC.networkGeneration()
     EC.appGeneration()
+    EC.userGeneration()
