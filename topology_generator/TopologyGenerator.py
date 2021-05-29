@@ -27,7 +27,8 @@ class TopologyGenerator:
                 # this level is generated only if YAFS_sim is False
                 if not YAFS_sim:
                     H = nx.Graph()
-                    H.add_nodes_from([(i, {"class[z]": level}) for i in range(iot_nodes)]) # [z] is used for Gephi visualization with the Network Splitter 3D layout
+                    #H.add_nodes_from([(i, {"class[z]": level}) for i in range(iot_nodes)]) # [z] is used for Gephi visualization with the Network Splitter 3D layout
+                    H.add_nodes_from([(i, {"level": "iot"}) for i in range(iot_nodes)])
 
             elif level == 1:
                 # FOG-0 level generation: "private" fog nodes
@@ -35,17 +36,20 @@ class TopologyGenerator:
                 if not YAFS_sim:
                     H = nx.gnp_random_graph(iot_nodes // fog0_reduction_factor, edge_prob_0)
                 else:
-                    H.add_nodes_from([(i, {"class[z]": level}) for i in range(iot_nodes // 5)]) # [z] is used for Gephi visualization with the Network Splitter 3D layout
+                    #H.add_nodes_from([(i, {"class[z]": level}) for i in range(iot_nodes // 5)]) # [z] is used for Gephi visualization with the Network Splitter 3D layout
+                    H.add_nodes_from([(i, {"level": "gateway"}) for i in range(iot_nodes // 5)])
             elif level == levels-1:
                 H = nx.Graph()
-                H.add_nodes_from([(0, {"class[z]": level})])
+                #H.add_nodes_from([(0, {"class[z]": level})])
+                H.add_nodes_from([(0, {"level": "cloud"})]) # CLOUD
 
             else:
                 # FOG level > 0
-                new_nodes = (iot_nodes // fog0_reduction_factor) // (fogi_reduction_factor ** (level-1)) if (iot_nodes // fog0_reduction_factor) // (fogi_reduction_factor**(level-1)) >= 2 else 2
+                new_nodes = iot_nodes // (fogi_reduction_factor ** (level-1)) if iot_nodes // (fogi_reduction_factor**(level-1)) >= 2 else 2
                 
                 # Small-World graph generation for FOG levels greater than 0 (e.g provincial fog nodes)
                 H = nx.watts_strogatz_graph(int(new_nodes), 2, hub_prob)
+                nx.set_node_attributes(H, level-2, "level")
                 
             # Remapping nodes label
             mapping = dict(zip(H, range(len(G.nodes), len(G.nodes) + len(H.nodes))))

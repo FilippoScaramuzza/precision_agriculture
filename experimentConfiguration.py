@@ -7,31 +7,34 @@ class ExperimentConfiguration:
 
     def __init__(self):
 
-        self.IOT_DEVICES_NUM = 2000
-        self.NETWORK_LEVELS_NUM = 5
-        self.REDUCTION_FACTOR_1 = 50 # IOT -> FOG-0 nodes reduction factor
+        self.IOT_DEVICES_NUM = 100
+        self.NETWORK_LEVELS_NUM = 7 # IOT, GATEWAY, FOG0, FOG1, FOG2, FOG3, CLOUD
+        self.REDUCTION_FACTOR_1 = 5 # IOT -> GATEWAY nodes reduction factor
         self.LINK_GENERATION_PROBABILITY_FOG0 = 0
         self.REDUCTION_FACTOR_2 = 3/2 # FOG-i -> FOG-i+1 nodes reduction factor (3/2 means multuplying by 2/3)
         self.HUB_GENERATION_PROBABILITY = 0.1
 
-        self.FUNC_NODE_RAM_IOT = "random.randrange(10,14)"
-        self.FUNC_NODE_RAM_FOG0 = "random.randrange(13, 17)"
-        self.FUNC_NODE_RAM_FOG1 = "random.randrange(16, 20)"
-        self.FUNC_NODE_RAM_FOG2 = "random.randrange(19, 23)"
+        self.FUNC_NODE_RAM_FOG0 = "random.randrange(10,14)"
+        self.FUNC_NODE_RAM_FOG1 = "random.randrange(13, 17)"
+        self.FUNC_NODE_RAM_FOG2 = "random.randrange(16, 20)"
+        self.FUNC_NODE_RAM_FOG3 = "random.randrange(19, 23)"
         self.FUNC_NODE_RAM_CLOUD = "9999999999999999"
 
-        self.FUNC_NODE_IPT_IOT = "random.randrange(1, 10)"
-        self.FUNC_NODE_IPT_FOG0 = "random.randrange(10, 200)"
-        self.FUNC_NODE_IPT_FOG1 = "random.randrange(190, 380)"
-        self.FUNC_NODE_IPT_FOG2 = "random.randrange(370, 560)"
+        self.FUNC_NODE_IPT_FOG0 = "random.randrange(1, 10)"
+        self.FUNC_NODE_IPT_FOG1 = "random.randrange(1, 10)"
+        self.FUNC_NODE_IPT_FOG2 = "random.randrange(1, 10)"
+        self.FUNC_NODE_IPT_FOG3 = "random.randrange(1, 10)"
         self.FUNC_NODE_IPT_CLOUD = "9999"
 
-        self.FUNC_EDGE_PR_SAME_LEVEL = "random.randrange(1, 10)"
+        self.FUNC_EDGE_PR_SAME_LEVEL = "random.randrange(5, 10)"
+        self.FUNC_EDGE_PR_ADJ_LEVEL = "random.randrange(7, 12)"
+        self.FUNC_EDGE_PR_NON_ADJ_LEVEL_1 = "random.randrange(9, 15)"
+        self.FUNC_EDGE_PR_NON_ADJ_LEVEL_2 = "random.randrange(11, 17)"
+
         self.FUNC_EDGE_BW_SAME_LEVEL = "random.randrange(20, 30)"
-        self.FUNC_EDGE_PR_ADJ_LEVEL = "random.randrange(5, 15)" 
         self.FUNC_EDGE_BW_ADJ_LEVEL = "random.randrange(20, 30)"
-        self.FUNC_EDGE_PR_NON_ADJ_LEVEL = "random.randrange(10, 15)"
-        self.FUNC_EDGE_BW_NON_ADJ_LEVEL = "random.randrange(20, 30)"
+        self.FUNC_EDGE_BW_NON_ADJ_LEVEL_1 = "random.randrange(20, 30)"
+        self.FUNC_EDGE_BW_NON_ADJ_LEVEL_2 = "random.randrange(20, 30)"
 
         self.NUMBER_OF_APPS = 20
         self.FUNC_APP_GENERATION = "nx.gn_graph(random.randint(2,4))"
@@ -241,19 +244,22 @@ class ExperimentConfiguration:
                                             hub_prob=self.HUB_GENERATION_PROBABILITY)
 
         for i in range(len(network_graph.nodes)):
-            if network_graph.nodes[i]["class[z]"] == 0:
-                network_graph.nodes[i]["RAM"] = eval(self.FUNC_NODE_RAM_IOT)
-                network_graph.nodes[i]["IPT"] = eval(self.FUNC_NODE_IPT_IOT)
-            elif network_graph.nodes[i]["class[z]"] == 1:
+            if network_graph.nodes[i]["level"] == "gateway":
+                network_graph.nodes[i]["RAM"] = 0
+                network_graph.nodes[i]["IPT"] = 0
+            if network_graph.nodes[i]["level"] == 0:
                 network_graph.nodes[i]["RAM"] = eval(self.FUNC_NODE_RAM_FOG0)
                 network_graph.nodes[i]["IPT"] = eval(self.FUNC_NODE_IPT_FOG0)
-            elif network_graph.nodes[i]["class[z]"] == 2:
+            elif network_graph.nodes[i]["level"] == 1:
                 network_graph.nodes[i]["RAM"] = eval(self.FUNC_NODE_RAM_FOG1)
                 network_graph.nodes[i]["IPT"] = eval(self.FUNC_NODE_IPT_FOG1)
-            elif network_graph.nodes[i]["class[z]"] == 3:
+            elif network_graph.nodes[i]["level"] == 2:
                 network_graph.nodes[i]["RAM"] = eval(self.FUNC_NODE_RAM_FOG2)
                 network_graph.nodes[i]["IPT"] = eval(self.FUNC_NODE_IPT_FOG2)
-            elif network_graph.nodes[i]["class[z]"] == 4:
+            elif network_graph.nodes[i]["level"] == 3:
+                network_graph.nodes[i]["RAM"] = eval(self.FUNC_NODE_RAM_FOG3)
+                network_graph.nodes[i]["IPT"] = eval(self.FUNC_NODE_IPT_FOG3)
+            elif network_graph.nodes[i]["level"] == "cloud":
                 network_graph.nodes[i]["RAM"] = eval(self.FUNC_NODE_RAM_CLOUD)
                 network_graph.nodes[i]["IPT"] = eval(self.FUNC_NODE_IPT_CLOUD)
 
@@ -262,18 +268,22 @@ class ExperimentConfiguration:
                 network_graph[u][v]["PR"] = eval(self.FUNC_EDGE_PR_SAME_LEVEL)
                 network_graph[u][v]["BW"] = eval(self.FUNC_EDGE_BW_SAME_LEVEL)
 
-            elif abs(int(network_graph.nodes[u]["class[z]"]) - int(network_graph.nodes[v]["class[z]"])):
+            elif abs(int(network_graph.nodes[u]["class[z]"]) - int(network_graph.nodes[v]["class[z]"])) == 1:
                 network_graph[u][v]["PR"] = eval(self.FUNC_EDGE_PR_ADJ_LEVEL)
                 network_graph[u][v]["BW"] = eval(self.FUNC_EDGE_BW_ADJ_LEVEL)
+            elif abs(int(network_graph.nodes[u]["class[z]"]) - int(network_graph.nodes[v]["class[z]"])) == 2:
+                network_graph[u][v]["PR"] = eval(self.FUNC_EDGE_PR_NON_ADJ_LEVEL_1)
+                network_graph[u][v]["BW"] = eval(self.FUNC_EDGE_BW_NON_ADJ_LEVEL_1)
             else:
-                network_graph[u][v]["PR"] = eval(self.FUNC_EDGE_PR_ADJ_LEVEL)
-                network_graph[u][v]["BW"] = eval(self.FUNC_EDGE_BW_ADJ_LEVEL)
+                network_graph[u][v]["PR"] = eval(self.FUNC_EDGE_PR_NON_ADJ_LEVEL_2)
+                network_graph[u][v]["BW"] = eval(self.FUNC_EDGE_BW_NON_ADJ_LEVEL_2)
 
-        self.gateways_devices = [n for n in network_graph.nodes if network_graph.nodes[n]["class[z]"]==1]
+        self.gateways_devices = [n for n in network_graph.nodes if network_graph.nodes[n]["level"]=="gateway"]
 
         json.dump(dict(entity=[dict(id=n, 
                                     RAM=network_graph.nodes[n]["RAM"], 
-                                    IPT=network_graph.nodes[n]["IPT"]) for n in network_graph.nodes()],
+                                    IPT=network_graph.nodes[n]["IPT"],
+                                    level=network_graph.nodes[n]["level"]) for n in network_graph.nodes()],
                        link=[dict(s=u, 
                                   d=v, 
                                   PR=network_graph[u][v]["PR"],
