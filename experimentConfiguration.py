@@ -81,7 +81,7 @@ class ExperimentConfiguration:
         
         user_json['sources']=self.users
         
-        file = open("usersDefinition.json","w")
+        file = open("json/usersDefinition.json","w")
         file.write(json.dumps(user_json))
         file.close()     
 
@@ -221,7 +221,7 @@ class ExperimentConfiguration:
         
             app_json.append(app_temp)
         
-        file = open("appDefinition.json","w")
+        file = open("json/appDefinition.json","w")
         file.write(json.dumps(app_json, indent=2))
         file.close()
 
@@ -278,7 +278,7 @@ class ExperimentConfiguration:
                                   d=v, 
                                   PR=network_graph[u][v]["PR"],
                                   BW=network_graph[u][v]["BW"]) for u,v in network_graph.edges()]),
-        open("topologyDefinition.json", 'w'), indent=2)
+        open("json/topologyDefinition.json", 'w'), indent=2)
 
 if __name__ == "__main__":
     EC = ExperimentConfiguration()
