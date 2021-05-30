@@ -1,9 +1,9 @@
-# "Fog Computing in Precision Agriculture" scenario simulation
+# "Fog Computing in Precision Agriculture" scenario simulation - README OUTDATED
 <div style="text-align: justify">
 <details>
 <summary>Table of Contents</summary>
 
-- ["Fog Computing in Precision Agriculture" scenario simulation](#fog-computing-in-precision-agriculture-scenario-simulation)
+- ["Fog Computing in Precision Agriculture" scenario simulation - README OUTDATED](#fog-computing-in-precision-agriculture-scenario-simulation---readme-outdated)
   - [Introduction](#introduction)
   - [Topology and Architecture description](#topology-and-architecture-description)
     - [Architecture and level description](#architecture-and-level-description)

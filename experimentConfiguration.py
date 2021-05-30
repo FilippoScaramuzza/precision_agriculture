@@ -37,7 +37,7 @@ class ExperimentConfiguration:
         self.FUNC_EDGE_BW_NON_ADJ_LEVEL_2 = "random.randrange(20, 30)"
 
         self.NUMBER_OF_APPS = 20
-        self.FUNC_APP_GENERATION = "nx.gn_graph(random.randint(2,4))"
+        self.FUNC_APP_GENERATION = "nx.gn_graph(random.randint(4,8))"
         self.FUNC_APP_DEADLINES = "random.randint(2600, 6600)"
         self.FUNC_SERVICE_RESOURCES = "random.randint(1,6)" 
         self.FUNC_SERVICEINSTR = "random.randint(20000,60000)"
@@ -105,12 +105,18 @@ class ExperimentConfiguration:
         self.map_serviceid_to_servicename = []
         self.apps_total_MIPS = []
         app_json = []
-        
+        privacies = []
+
         for i in range(self.NUMBER_OF_APPS):
             app_temp = {}
             labels_temp = {}
             APP = eval(self.FUNC_APP_GENERATION)
 
+            # Privacy has to be calculated before the "inversion" of edges direction
+            for n in APP.nodes:
+                num_of_hops = len(nx.shortest_path(APP, n, 0))
+                privacies.append(num_of_hops)
+                
             for n in range(len(APP.nodes)):
                 labels_temp[n] = str(n)
             
@@ -122,7 +128,7 @@ class ExperimentConfiguration:
             # edges from 1 to 0 (as they are generated) get inverted (from 0 to 1)
             for e in edge_list_:
                 APP.remove_edge(e[0], e[1])
-                APP.add_edge(e[0], e[1])
+                APP.add_edge(e[1], e[0])
 
             mapping = dict(zip(APP.nodes, range(self.number_of_services, self.number_of_services + len(APP.nodes))))
             APP = nx.relabel_nodes(APP, mapping)
@@ -160,6 +166,7 @@ class ExperimentConfiguration:
                 node_temp={}
                 node_temp['id']=n
                 node_temp['name']=str(i)+'_'+str(n)
+                node_temp['privacy'] = privacies[n]
                 node_temp['RAM']=self.services_resources[n]
                 node_temp['type']='MODULE'
                 if source==n:
@@ -241,50 +248,59 @@ class ExperimentConfiguration:
                                             fog0_reduction_factor=self.REDUCTION_FACTOR_1,
                                             edge_prob_0=self.LINK_GENERATION_PROBABILITY_FOG0,
                                             fogi_reduction_factor=self.REDUCTION_FACTOR_2,
-                                            hub_prob=self.HUB_GENERATION_PROBABILITY)
+                                            hub_prob=self.HUB_GENERATION_PROBABILITY,
+                                            min_conn_to_up=self.NETWORK_LEVELS_NUM,     # VALUE TO BE CHECKED
+                                            max_conn_to_up=self.NETWORK_LEVELS_NUM + 10,# VALUE TO BE CHECKED
+                                            all_to_cloud=True)
 
         for i in range(len(network_graph.nodes)):
-            if network_graph.nodes[i]["level"] == "gateway":
+            # GATEWAYS
+            if network_graph.nodes[i]["level[z]"] == 1:
                 network_graph.nodes[i]["RAM"] = 0
                 network_graph.nodes[i]["IPT"] = 0
-            if network_graph.nodes[i]["level"] == 0:
+            # FOG0
+            if network_graph.nodes[i]["level[z]"] == 2:
                 network_graph.nodes[i]["RAM"] = eval(self.FUNC_NODE_RAM_FOG0)
                 network_graph.nodes[i]["IPT"] = eval(self.FUNC_NODE_IPT_FOG0)
-            elif network_graph.nodes[i]["level"] == 1:
+            # FOG1
+            elif network_graph.nodes[i]["level[z]"] == 3:
                 network_graph.nodes[i]["RAM"] = eval(self.FUNC_NODE_RAM_FOG1)
                 network_graph.nodes[i]["IPT"] = eval(self.FUNC_NODE_IPT_FOG1)
-            elif network_graph.nodes[i]["level"] == 2:
+            # FOG2
+            elif network_graph.nodes[i]["level[z]"] == 4:
                 network_graph.nodes[i]["RAM"] = eval(self.FUNC_NODE_RAM_FOG2)
                 network_graph.nodes[i]["IPT"] = eval(self.FUNC_NODE_IPT_FOG2)
-            elif network_graph.nodes[i]["level"] == 3:
+            # FOG3
+            elif network_graph.nodes[i]["level[z]"] == 5:
                 network_graph.nodes[i]["RAM"] = eval(self.FUNC_NODE_RAM_FOG3)
                 network_graph.nodes[i]["IPT"] = eval(self.FUNC_NODE_IPT_FOG3)
-            elif network_graph.nodes[i]["level"] == "cloud":
+            # CLOUD
+            elif network_graph.nodes[i]["level[z]"] == 6:
                 network_graph.nodes[i]["RAM"] = eval(self.FUNC_NODE_RAM_CLOUD)
                 network_graph.nodes[i]["IPT"] = eval(self.FUNC_NODE_IPT_CLOUD)
 
         for u, v in network_graph.edges:
-            if network_graph.nodes[u]["class[z]"] == network_graph.nodes[v]["class[z]"]:
+            if network_graph.nodes[u]["level[z]"] == network_graph.nodes[v]["level[z]"]:
                 network_graph[u][v]["PR"] = eval(self.FUNC_EDGE_PR_SAME_LEVEL)
                 network_graph[u][v]["BW"] = eval(self.FUNC_EDGE_BW_SAME_LEVEL)
 
-            elif abs(int(network_graph.nodes[u]["class[z]"]) - int(network_graph.nodes[v]["class[z]"])) == 1:
+            elif abs(int(network_graph.nodes[u]["level[z]"]) - int(network_graph.nodes[v]["level[z]"])) == 1:
                 network_graph[u][v]["PR"] = eval(self.FUNC_EDGE_PR_ADJ_LEVEL)
                 network_graph[u][v]["BW"] = eval(self.FUNC_EDGE_BW_ADJ_LEVEL)
-            elif abs(int(network_graph.nodes[u]["class[z]"]) - int(network_graph.nodes[v]["class[z]"])) == 2:
+            elif abs(int(network_graph.nodes[u]["level[z]"]) - int(network_graph.nodes[v]["level[z]"])) == 2:
                 network_graph[u][v]["PR"] = eval(self.FUNC_EDGE_PR_NON_ADJ_LEVEL_1)
                 network_graph[u][v]["BW"] = eval(self.FUNC_EDGE_BW_NON_ADJ_LEVEL_1)
             else:
                 network_graph[u][v]["PR"] = eval(self.FUNC_EDGE_PR_NON_ADJ_LEVEL_2)
                 network_graph[u][v]["BW"] = eval(self.FUNC_EDGE_BW_NON_ADJ_LEVEL_2)
 
-        self.gateways_devices = [n for n in network_graph.nodes if network_graph.nodes[n]["level"]=="gateway"]
+        self.gateways_devices = [n for n in network_graph.nodes if network_graph.nodes[n]["level[z]"] == 1]
         self.G = network_graph
 
         json.dump(dict(entity=[dict(id=n, 
                                     RAM=network_graph.nodes[n]["RAM"], 
                                     IPT=network_graph.nodes[n]["IPT"],
-                                    level=network_graph.nodes[n]["level"]) for n in network_graph.nodes()],
+                                    level=network_graph.nodes[n]["level[z]"]) for n in network_graph.nodes()],
                        link=[dict(s=u, 
                                   d=v, 
                                   PR=network_graph[u][v]["PR"],
